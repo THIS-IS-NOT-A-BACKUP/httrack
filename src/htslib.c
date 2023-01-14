@@ -2602,7 +2602,6 @@ TStamp time_local(void) {
 
 // number of millisec since 1970
 HTSEXT_API TStamp mtime_local(void) {
-#ifndef HTS_DO_NOT_USE_FTIME
 #ifndef _WIN32
   struct timeval tv;
   if (gettimeofday(&tv, NULL) != 0) {
@@ -2616,11 +2615,6 @@ HTSEXT_API TStamp mtime_local(void) {
   ftime(&B);
   return (TStamp) (((TStamp) B.time * (TStamp) 1000)
                    + ((TStamp) B.millitm));
-#endif
-#else
-  // not precise..
-  return (TStamp) (((TStamp) time_local() * (TStamp) 1000)
-                   + ((TStamp) 0));
 #endif
 }
 
@@ -2784,18 +2778,13 @@ struct tm *convert_time_rfc822(struct tm *result, const char *s) {
   return NULL;
 }
 
-static time_t getGMT(struct tm *tm) {   /* hey, time_t is local! */
-  time_t t = mktime(tm);
+static time_t getGMT(struct tm *tm) {
+  time_t t = timegm(tm);
 
   if (t != (time_t) - 1 && t != (time_t) 0) {
-    /* BSD does not have static "timezone" declared */
-#if (defined(BSD) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD_kernel__))
-    time_t now = time(NULL);
-    time_t timezone = -localtime(&now)->tm_gmtoff;
-#endif
-    return (time_t) (t - timezone);
+    return (time_t) t;
   }
-  return (time_t) - 1;
+  return (time_t) -1;
 }
 
 /* sets file time. -1 if error */
@@ -5518,7 +5507,7 @@ HTSEXT_API httrackp *hts_create_opt(void) {
   opt->maxcache = 1048576 * 32; // a peu près 32Mo en cache max -- OPTION NON PARAMETRABLE POUR L'INSTANT --
   //opt->maxcache_anticipate=256;  // maximum de liens à anticiper
   opt->maxtime = -1;            // temps max en secondes
-  opt->maxrate = 25000;         // taux maxi
+  opt->maxrate = 100000;        // taux maxi
   opt->maxconn = 5.0;           // nombre connexions/s
   opt->waittime = -1;           // wait until.. hh*3600+mm*60+ss
   //

@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 
-AC_INIT([httrack], [3.49.3], [roche+packaging@httrack.com], [httrack], [http://www.httrack.com/])
+AC_INIT([httrack], [3.49.4], [roche+packaging@httrack.com], [httrack], [http://www.httrack.com/])
 AC_COPYRIGHT([
 HTTrack Website Copier, Offline Browser for Windows and Unix
 Copyright (C) 1998-2015 Xavier Roche and other contributors
@@ -75,10 +75,20 @@ AX_CHECK_COMPILE_FLAG([-Wold-style-definition], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS
 AX_CHECK_COMPILE_FLAG([-Wignored-qualifiers], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -Wignored-qualifiers"])
 AX_CHECK_COMPILE_FLAG([-fstrict-aliasing -Wstrict-aliasing], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -fstrict-aliasing -Wstrict-aliasing"])
 AX_CHECK_COMPILE_FLAG([-fstack-protector], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -fstack-protector"])
-AX_CHECK_LINK_FLAG([-Wl,--discard-all], [DEFAULT_LDLAGS="$DEFAULT_LDLAGS -Wl,--discard-all"])
-AX_CHECK_LINK_FLAG([-Wl,--no-undefined], [DEFAULT_LDLAGS="$DEFAULT_LDLAGS -Wl,--no-undefined"])
-AX_CHECK_LINK_FLAG([-Wl,-z,relro -Wl,-z,now], [DEFAULT_LDLAGS="$DEFAULT_LDLAGS -Wl,-z,relro -Wl,-z,now"])
-AX_CHECK_LINK_FLAG([-Wl,-z,noexecstack], [DEFAULT_LDLAGS="$DEFAULT_LDLAGS -Wl,-z,noexecstack"])
+AX_CHECK_COMPILE_FLAG([-fstack-clash-protection], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -fstack-clash-protection"])
+AX_CHECK_COMPILE_FLAG([-fcf-protection], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -fcf-protection"])
+AX_CHECK_LINK_FLAG([-Wl,--discard-all], [DEFAULT_LDFLAGS="$DEFAULT_LDFLAGS -Wl,--discard-all"])
+AX_CHECK_LINK_FLAG([-Wl,--no-undefined], [DEFAULT_LDFLAGS="$DEFAULT_LDFLAGS -Wl,--no-undefined"])
+AX_CHECK_LINK_FLAG([-Wl,-z,relro,-z,now], [DEFAULT_LDFLAGS="$DEFAULT_LDFLAGS -Wl,-z,relro,-z,now"])
+AX_CHECK_LINK_FLAG([-Wl,-z,noexecstack], [DEFAULT_LDFLAGS="$DEFAULT_LDFLAGS -Wl,-z,noexecstack"])
+
+### PIE
+CFLAGS_PIE=""
+LDFLAGS_PIE=""
+AX_CHECK_COMPILE_FLAG([-fpie -pie], [CFLAGS_PIE="-fpie -pie"])
+AX_CHECK_LINK_FLAG([-pie], [LDFLAGS_PIE="-pie"])
+AC_SUBST([CFLAGS_PIE])
+AC_SUBST([LDFLAGS_PIE])
 
 ## Export all symbols for backtraces
 AX_CHECK_COMPILE_FLAG([-rdynamic], [DEFAULT_CFLAGS="$DEFAULT_CFLAGS -rdynamic"])
@@ -229,10 +239,6 @@ AC_CHECK_LIB(c, dlopen, [DL_LIBS=
 AC_DEFINE(DLLIB, 1,[Check for dlopen in c])], AC_MSG_WARN([*** not found * this is bad]))
 AC_SUBST(DL_LIBS)
 fi
-
-### Check for ftime
-AC_CHECK_LIB(c, ftime, [
-AC_DEFINE(FTIME, 1,[Check for ftime])], AC_MSG_RESULT([not found]))
 
 ### Check for setuid
 AC_CHECK_LIB(c, setuid, [
